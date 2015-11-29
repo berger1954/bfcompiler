@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <assert.h>
@@ -218,19 +219,53 @@ int main(int argc, char* argv[])
     int fp;
     char* program;
     struct stat filestats;
+    char* sourcename = "";
+    char* outputname = "a.s";
+    int buffersize = 30000;
+    int mode = 32;
 
     if (argc < 2)
     {
-        printf("Please specify source file\n");
+        printf("Usage <source file>.b [-i input file]|[-o output file]|[-s buffer size]|[-m32 32 bit mode]|[-m64 64 bit mod]\n");
         exit(1);
     }
 
-    for (int i = 0; i < argc; i++)
+    for (int i = 1; i < argc; i++)
     {
-        
+        if ((strcmp(argv[i], "-i") == 0) && (i < argc - 1))
+        {
+            sourcename = argv[i + 1];
+            i++;
+        }
+        else if ((strcmp(argv[i], "-o")) == 0 && (i < argc - 1)) 
+        {
+            outputname = argv[i + 1];
+            i++;
+        }
+        else if ((strcmp(argv[i], "-s")) == 0 && (i < argc - 1))
+        {
+            buffersize = atoi(argv[i + 1]);
+            i++;
+            printf("Not yet implemented. Sorry.\n");
+        }
+        else if ((strcmp(argv[i], "-m64")) == 0 && (i < argc - 1))
+        {
+            printf("64 bit mode not implemented yet. Sorry.\n");
+            i++;
+        }
+        else if ((strcmp(argv[i], "-m32")) == 0 && (i < argc - 1))
+        {
+            printf("Good job choosing 32 bit mode. Cause that's the only version so far\n");
+            i++;
+        }
     }
 
-    fp = open(argv[1], O_RDONLY);
+    if (strcmp(sourcename, "") == 0)
+    {
+        sourcename = argv[1];
+    }
+
+    fp = open(sourcename, O_RDONLY);
 
     assert(fp > -1);
 
@@ -244,7 +279,7 @@ int main(int argc, char* argv[])
 
     assert(verify(program) == 1);
 
-    FILE* output = fopen("main.s", "w"); 
+    FILE* output = fopen(outputname, "w"); 
     list* optimizedprogram = optimize(program);
     writeAssembly(optimizedprogram, output);
 
