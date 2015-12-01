@@ -220,9 +220,13 @@ int main(int argc, char* argv[])
     char* program;
     struct stat filestats;
     char* sourcename = "";
-    char* outputname = "a.s";
+    char outputfile[256] = "a.s";
+    char* outname;
     int buffersize = 30000;
     int mode = 32;
+    char systemcommand[256];
+    int compile = 1;
+    int assemble = 0;
 
     if (argc < 2)
     {
@@ -239,7 +243,9 @@ int main(int argc, char* argv[])
         }
         else if ((strcmp(argv[i], "-o")) == 0 && (i < argc - 1)) 
         {
-            outputname = argv[i + 1];
+            strcpy(outputfile, argv[i + 1]);
+            strcat(outputfile, ".s");
+            outname = argv[i + 1];
             i++;
         }
         else if ((strcmp(argv[i], "-s")) == 0 && (i < argc - 1))
@@ -279,9 +285,19 @@ int main(int argc, char* argv[])
 
     assert(verify(program) == 1);
 
-    FILE* output = fopen(outputname, "w"); 
+    FILE* output = fopen(outputfile, "w"); 
     list* optimizedprogram = optimize(program);
     writeAssembly(optimizedprogram, output);
+    fclose(output);
+    if (compile)
+    {
+        strcat(systemcommand, "gcc ");
+        strcat(systemcommand, outputfile);
+        strcat(systemcommand, " -o ");
+        strcat(systemcommand, outname);
+        strcat(systemcommand, " -m32");
+        system(systemcommand);
+    }
 
     return 0;    
 }
