@@ -272,11 +272,11 @@ int writeAssembly(list* program, FILE* fd)
     #ifdef _WIN32
     fputs("\tpush %edx\n"
 "	call _free\n"
-"    push $0\n",fd);
+"   pop %edx\n",fd);
     #else
     fputs("\tpush %edx\n"
 "	call free\n"
-"    push $0\n",fd);
+"   pop %edx\n",fd);
     #endif
     fputs("\tleave\n"
 "	ret\n",fd);

@@ -1,8 +1,6 @@
 #include "stack.h"
 #include <stdlib.h>
 
-
-
 int push (struct stack* stack, int content)
 {
     struct node* newnode;
