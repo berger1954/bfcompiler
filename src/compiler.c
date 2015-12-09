@@ -6,30 +6,31 @@
 #include <assert.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include "stack.h"
 #include "source_list.h"
+#include "stack.h"
 
 int verify(char* program)
 {
-    struct stack verifystack;
-    verifystack.top = NULL;
-    verifystack.length = 0;
+    int verifystack = 0;
     int i = 0;    
     while(program[i] != '\0')
     {
         if (program[i] == '[')
         {
-             push(&verifystack, 1);
+             verifystack++;
         }
         else if (program[i] == ']')
         {
-             pop(&verifystack);
+            verifystack--;
         }
 
     i++;
     }
-
-    return isempty(&verifystack);
+    if (verifystack == 0)
+    {
+        return 0;
+    }
+    return -1;
 }
 
 list* optimize(char* program)
@@ -104,18 +105,61 @@ int writeAssembly(list* program, FILE* fd)
         return 0;
     }
     #ifdef _WIN32
-    fputs("\t.file \"main.s\"\n\t.text\n.globl main\n\t.globl _main\n\t.global main\n\t.global _main\n\t.extern _malloc\n\t.extern _putchar\n\t.extern _getchar\n",fd);
-    fputs("_main:\nmain:\n\tpushl %ebp\n\tmovl %esp, %ebp\n", fd);  
-    fputs("\tpushl $30000\n\tcall _malloc\n\tmovl %eax, %edx\n", fd);
-    fputs("clear:\n\tpushl $30000\n\tpushl $0\n\tpushl %edx\n\tcall _memset\n\tpopl %edx\n\taddl $8, %esp\n", fd); 
-    fputs("\tmovl $0, %ebx\n\tmovl $0, %ecx\n",fd);
+    fputs(
+"    .file \"main.s\"\n"
+"    .text\n"
+".globl main\n"
+"    .globl _main\n"
+"    .global main\n"
+"    .global _main\n"
+"    .extern _malloc\n"
+"	.extern _putchar\n"
+"	.extern _getchar\n"
+"_main:\n"
+"main:\n"
+"	pushl %ebp\n"
+"	movl %esp, %ebp\n"
+"   pushl $30000\n"
+"	call _malloc\n"
+"	movl %eax, %edx\n"
+"clear:\n"
+"	pushl $30000\n"
+"	pushl $0\n"
+"	pushl %edx\n"
+"	call _memset\n"
+"	popl %edx\n"
+"	addl $8, %esp\n"
+"   movl $0, %ebx\n"
+"	movl $0, %ecx\n",fd);
+
     #else
-    fputs(".code32\n",fd);
-    fputs("\t.file \"main.s\"\n\t.text\n.globl main\n\t.globl _main\n\t.global main\n\t.global _main\n\t.extern malloc\n\t.extern putchar\n\t.extern getchar\n",fd);
-    fputs("_main:\nmain:\n\tpushl %ebp\n\tmovl %esp, %ebp\n", fd);
-    fputs("\tpushl $30000\n\tcall _malloc\n\tmovl %eax, %edx\n", fd);
-    fputs("clear:\n\tpushl $30000\n\tpushl $0\n\tpushl %edx\n\tcall _memset\n\tpopl %edx\n\taddl $8, %esp\n", fd);
-    fputs("\tmovl $0, %ebx\n\tmovl $0, %ecx\n",fd);
+    fputs(
+".file \"main.s\"\n"
+"	.text\n"
+".globl main\n"
+"	.globl _main\n"
+"	.global main\n"
+"	.global _main\n"
+"	.extern malloc\n"
+"	.extern putchar\n"
+"	.extern getchar\n"
+"_main:\n"
+"main:\n"
+"	pushl %ebp\n"
+"	movl %esp, %ebp\n"
+"   pushl $30000\n"
+"	call _malloc\n"
+"	movl %eax, %edx\n"
+"clear:\n"
+"	pushl $30000\n"
+"	pushl $0\n"
+"	pushl %edx\n"
+"	call _memset\n"
+"	popl %edx\n"
+"	addl $8, %esp\n"
+"   movl $0, %ebx\n"
+"	movl $0, %ecx\n",fd);
+
     #endif
     while (currentnode != NULL)
     {
@@ -154,21 +198,42 @@ int writeAssembly(list* program, FILE* fd)
         else if (currentnode->token == '.')
         {
             #ifdef _WIN32
-            fputs("\tmovzbl (%edx, %ebx), %eax\n\tpushl %edx\n\tpushl %ebx\n\tpushl %eax\n",fd);
-            fputs("\tcall _putchar\n\tpopl %ecx\n\tpopl %ebx\n\tpopl %edx\n",fd);
+            fputs("\tmovzbl (%edx, %ebx), %eax\n"
+"	pushl %edx\n"
+"	pushl %ebx\n"
+"	pushl %eax\n"
+"   call _putchar\n"
+"	popl %ecx\n"
+"	popl %ebx\n"
+"	popl %edx\n",fd);
+
             #else
-            fputs("\tmovzbl (%edx, %ebx), %eax\n\tpushl %edx\n\tpushl %ebx\n\tpushl %eax\n",fd);
-            fputs("\tcall putchar\n\tpopl %ecx\n\tpopl %ebx\n\tpopl %edx\n",fd);
+            fputs("\tmovzbl (%edx, %ebx), %eax\n"
+"	pushl %edx\n"
+"	pushl %ebx\n"
+"	pushl %eax\n"
+"   call putchar\n"
+"	popl %ecx\n"
+"	popl %ebx\n"
+"	popl %edx\n",fd);
             #endif
         }      
         else if (currentnode->token == ',')
         {
             #ifdef _WIN32
-            fputs("\tpushl %edx\n\tpushl %ebx\n\tcall _getchar\n",fd);
-            fputs("\tpopl %ebx\n\tpopl %edx\n\tmovb %al, (%edx, %ebx)\n",fd);
+            fputs("\tpushl %edx\n"
+"	pushl %ebx\n"
+"	call _getchar\n"
+"   popl %ebx\n"
+"	popl %edx\n"
+"	movb %al, (%edx, %ebx)\n",fd);
             #else
-            fputs("\tpushl %edx\n\tpushl %ebx\n\tcall getchar\n",fd);
-            fputs("\tpopl %ebx\n\tpopl %edx\n\tmovb %al, (%edx, %ebx)\n",fd);
+            fputs("\tpushl %edx\n"
+"	pushl %ebx\n"
+"	call getchar\n"
+"    popl %ebx\n"
+"	popl %edx\n"
+"	movb %al, (%edx, %ebx)\n",fd);
             #endif
         }
         else if (currentnode->token == '[')
@@ -205,11 +270,16 @@ int writeAssembly(list* program, FILE* fd)
         currentnode = currentnode->next;
     }
     #ifdef _WIN32
-    fputs("\tpush %edx\n\tcall _free\n",fd);
+    fputs("\tpush %edx\n"
+"	call _free\n"
+"    push $0\n",fd);
     #else
-    fputs("\tpush %edx\n\tcall free\n",fd);
+    fputs("\tpush %edx\n"
+"	call free\n"
+"    push $0\n",fd);
     #endif
-    fputs("\tleave\n\tret\n",fd);
+    fputs("\tleave\n"
+"	ret\n",fd);
     return 1;
 }
 
@@ -283,7 +353,11 @@ int main(int argc, char* argv[])
 
     assert(read(fp, program, filestats.st_size) >= 0);
 
-    assert(verify(program) == 1);
+    if (verify(program) != 0)
+    {
+        printf("Program brackets not closed\n");
+        return -1;
+    }
 
     FILE* output = fopen(outputfile, "w"); 
     list* optimizedprogram = optimize(program);
@@ -291,11 +365,10 @@ int main(int argc, char* argv[])
     fclose(output);
     if (compile)
     {
-        strcat(systemcommand, "gcc ");
+        strcat(systemcommand, "as ");
         strcat(systemcommand, outputfile);
         strcat(systemcommand, " -o ");
         strcat(systemcommand, outname);
-        strcat(systemcommand, " -m32");
         system(systemcommand);
     }
 
