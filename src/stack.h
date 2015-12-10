@@ -1,3 +1,6 @@
+#ifndef _STACK
+#define _STACK
+
 struct node {
     struct node* next;
     int content;
@@ -16,3 +19,4 @@ int isempty(struct stack* stack);
 
 int peak(struct stack* stack);
 
+#endif
