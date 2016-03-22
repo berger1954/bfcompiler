@@ -1,3 +1,6 @@
+#ifndef _SOURCELIST
+#define _SOURCELIST
+
 typedef struct source_nodes {
     char token;
     int count;
@@ -26,3 +29,5 @@ void printlist(list* sourcelist);
 list* createlist();
 
 void destroylist(list* sourcelist);
+
+#endif
