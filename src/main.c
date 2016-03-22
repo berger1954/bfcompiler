@@ -10,6 +10,15 @@
 #include "stack.h"
 #include "assembly.h"
 
+
+int WINDOWSFLAG = 0;
+
+//verify
+//@{char*}
+//
+//Accepts a string containing the sourcecode of the brainfuck program.
+//Uses an integer as a stack to verify that the program contains only
+//well formed expressions, i.e. that the brackets match.
 int verify(char* program)
 {
     int verifystack = 0;
@@ -34,6 +43,22 @@ int verify(char* program)
     return -1;
 }
 
+//optimize
+//@{char*}
+//
+//Accepts a string containing the source code of the program.
+//It performs some minor optimizations by counting contiguous
+//strings of symbols and condenses them into a single instruction.
+//
+//Example:
+//Brainfuck:
+//+++
+//Unoptimized assembly:
+//ADD %EAX, $1
+//ADD %EAX, $1
+//ADD %EAX, $1
+//Optimized assembly:
+//ADD %EAX, $3
 list* optimize(char* program)
 {
     int i = 0;

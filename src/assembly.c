@@ -1,9 +1,9 @@
 #include "assembly.h"
 #include "stack.h"
 
-#ifdef _WIN32
+extern int WINDOWSFLAG;
 
-char* introassembly = 
+char* introassemblyWIN = 
 "    .file \"main.s\"\n"
 "    .text\n"
 ".globl main\n"
@@ -30,14 +30,12 @@ char* introassembly =
 "   movl $0, %ebx\n"
 "	movl $0, %ecx\n";
 
-char* exitassembly = 
+char* exitassemblyWIN = 
 "	push %edx\n"
 "	call _free\n"
 "   pop %edx\n";
 
-#else
-
-char* introassembly =
+char* introassemblyLIN =
 ".file \"main.s\"\n"
 "	.text\n"
 ".globl main\n"
@@ -64,15 +62,27 @@ char* introassembly =
 "   movl $0, %ebx\n"
 "	movl $0, %ecx\n";
 
-char* exitassembly =
+char* exitassemblyLIN =
 "	push %edx\n"
 "	call free\n"
 "   pop %edx\n";
 
-#endif
-
 int writeAssembly(list* program, FILE* fd)
 {
+    char* introassembly;
+    char* exitassembly;
+
+    if (WINDOWSFLAG)
+    {
+        introassembly = introassemblyWIN;
+        exitassembly = exitassemblyWIN;
+    }
+    else
+    {
+        introassembly = introassemblyLIN;
+        exitassembly = exitassemblyLIN;
+    }
+
     struct stack* jumpstack = (struct stack*)malloc(sizeof(struct stack));
     jumpstack->top = NULL;
     jumpstack->length = 0;
@@ -121,8 +131,9 @@ int writeAssembly(list* program, FILE* fd)
         } 
         else if (currentnode->token == '.')
         {
-            #ifdef _WIN32
-            fputs("\tmovzbl (%edx, %ebx), %eax\n"
+            if (WINDOWSFLAG)
+            {
+                fputs("\tmovzbl (%edx, %ebx), %eax\n"
 "	pushl %edx\n"
 "	pushl %ebx\n"
 "	pushl %eax\n"
@@ -130,9 +141,10 @@ int writeAssembly(list* program, FILE* fd)
 "	popl %ecx\n"
 "	popl %ebx\n"
 "	popl %edx\n",fd);
-
-            #else
-            fputs("\tmovzbl (%edx, %ebx), %eax\n"
+            }
+            else
+            {
+                fputs("\tmovzbl (%edx, %ebx), %eax\n"
 "	pushl %edx\n"
 "	pushl %ebx\n"
 "	pushl %eax\n"
@@ -140,25 +152,28 @@ int writeAssembly(list* program, FILE* fd)
 "	popl %ecx\n"
 "	popl %ebx\n"
 "	popl %edx\n",fd);
-            #endif
+            }
         }      
         else if (currentnode->token == ',')
         {
-            #ifdef _WIN32
-            fputs("\tpushl %edx\n"
+            if (WINDOWSFLAG)
+            {
+                fputs("\tpushl %edx\n"
 "	pushl %ebx\n"
 "	call _getchar\n"
 "   popl %ebx\n"
 "	popl %edx\n"
 "	movb %al, (%edx, %ebx)\n",fd);
-            #else
-            fputs("\tpushl %edx\n"
+            }
+            else
+            {
+                fputs("\tpushl %edx\n"
 "	pushl %ebx\n"
 "	call getchar\n"
 "   popl %ebx\n"
 "	popl %edx\n"
 "	movb %al, (%edx, %ebx)\n",fd);
-            #endif
+            }
         }
         else if (currentnode->token == '[')
         {
