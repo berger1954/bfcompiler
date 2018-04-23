@@ -9,6 +9,6 @@ char* introassembly;
 
 char* exitassembly;
 
-int writeassembly(list* program, FILE* fd);
+int writeAssembly(list* program, FILE* fd);
 
 #endif
